@@ -21,108 +21,40 @@ func (ce *ConstraintEngine) Verify(trace vm.ExecutionTrace) error {
 }
 
 func (ce *ConstraintEngine) verifyStep(step vm.TraceStep) error {
-	switch step.Op {
+	// skip non-arithmetic ops for now
+	if len(step.StackBefore) < 2 {
+		return nil
+	}
 
-	case vm.PUSH:
-		return verifyPush(step)
+	a := step.StackBefore[len(step.StackBefore)-2]
+	b := step.StackBefore[len(step.StackBefore)-1]
 
+	if len(step.StackAfter) < 1 {
+		return fmt.Errorf("invalid stack after")
+	}
+
+	c := step.StackAfter[len(step.StackAfter)-1]
+
+	isAdd, isMul, isSub := getSelectors(step.Op)
+
+	val := isAdd*(a+b-c) + isMul*(a*b-c) + isSub*(a-b-c)
+
+	if val != 0 {
+		return fmt.Errorf("constraint failed: got %d", val)
+	}
+
+	return nil
+}
+
+func getSelectors(op vm.Opcode) (isAdd, isMul, isSub int) {
+	switch op {
 	case vm.ADD:
-		return verifyAdd(step)
-
-	case vm.SUB:
-		return verifySub(step)
-
+		return 1, 0, 0
 	case vm.MUL:
-		return verifyMul(step)
-
-	case vm.LOAD:
-		return verifyLoad(step)
-
-	case vm.STORE:
-		return verifyStore(step)
-
+		return 0, 1, 0
+	case vm.SUB:
+		return 0, 0, 1
 	default:
-		return fmt.Errorf("unknown opcode")
+		return 0, 0, 0
 	}
-}
-
-func verifyAdd(step vm.TraceStep) error {
-	if len(step.StackBefore) < 2 {
-		return fmt.Errorf("not enough elements for ADD")
-	}
-
-	if len(step.StackAfter) < 1 {
-		return fmt.Errorf("invalid stack after ADD")
-	}
-
-	a := step.StackBefore[len(step.StackBefore)-2]
-	b := step.StackBefore[len(step.StackBefore)-1]
-	c := step.StackAfter[len(step.StackAfter)-1]
-
-	if a+b != c {
-		return fmt.Errorf("ADD constraint failed: %d + %d != %d", a, b, c)
-	}
-
-	return nil
-}
-
-func verifySub(step vm.TraceStep) error {
-	if len(step.StackBefore) < 2 {
-		return fmt.Errorf("not enough elements for SUB")
-	}
-
-	if len(step.StackAfter) < 1 {
-		return fmt.Errorf("invalid stack after SUB")
-	}
-
-	a := step.StackBefore[len(step.StackBefore)-2]
-	b := step.StackBefore[len(step.StackBefore)-1]
-	c := step.StackAfter[len(step.StackAfter)-1]
-
-	if a-b != c {
-		return fmt.Errorf("SUB constraint failed")
-	}
-
-	return nil
-}
-
-func verifyMul(step vm.TraceStep) error {
-	if len(step.StackBefore) < 2 {
-		return fmt.Errorf("not enough elements for MUL")
-	}
-
-	if len(step.StackAfter) < 1 {
-		return fmt.Errorf("invalid stack after MUL")
-	}
-
-	a := step.StackBefore[len(step.StackBefore)-2]
-	b := step.StackBefore[len(step.StackBefore)-1]
-	c := step.StackAfter[len(step.StackAfter)-1]
-
-	if a*b != c {
-		return fmt.Errorf("MUL constraint failed")
-	}
-
-	return nil
-}
-
-func verifyPush(step vm.TraceStep) error {
-	if len(step.StackAfter) != len(step.StackBefore)+1 {
-		return fmt.Errorf("PUSH should increase stack size by 1")
-	}
-	return nil
-}
-
-func verifyStore(step vm.TraceStep) error {
-	if len(step.StackAfter) != len(step.StackBefore)-1 {
-		return fmt.Errorf("STORE should pop stack")
-	}
-	return nil
-}
-
-func verifyLoad(step vm.TraceStep) error {
-	if len(step.StackAfter) != len(step.StackBefore)+1 {
-		return fmt.Errorf("LOAD should push to stack")
-	}
-	return nil
 }
