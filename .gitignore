@@ -1,0 +1,51 @@
+# Binaries for programs
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.a
+*.lo
+*.la
+*.o
+*.out
+*.test
+*.info
+
+# Packaging
+#
+# Typically, Go projects are built using `go build`.
+#
+# If you are using a tool that produces a package file, such as a .zip, .tar
+# or .deb, uncomment the lines below.
+#
+# *.zip
+# *.tar.gz
+# *.deb
+
+# Test coverage
+*.coverprofile
+
+# External help files
+external_tools/
+
+# Project-local vendored dependencies
+vendor/
+
+# Environment files
+.env
+.env.*
+
+# Go work file (should not be committed to a shared repository)
+go.work*
+
+# IDE specific files
+.idea/         # IntelliJ/GoLand
+.vscode/       # VS Code
+.sublime/      # Sublime Text
+.vim/          # Vim
+pkg/           # Package cache
+
+# OS generated files
+.DS_Store      # macOS
+Thumbs.db      # Windows
