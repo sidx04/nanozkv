@@ -134,12 +134,15 @@ func (vm *VM) executeInstruction(inst Instruction) error {
 	afterStack := copyStack(vm.Stack)
 
 	vm.Trace.Add(TraceStep{
-		PC:          vm.PC,
-		Op:          inst.Op,
+		PC:  vm.PC,
+		Op:  inst.Op,
+		Arg: inst.Arg,
+
 		StackBefore: beforeStack,
 		StackAfter:  afterStack,
-		MemAddr:     memAddr,
-		MemValue:    memValue,
+
+		MemAddr:  memAddr,
+		MemValue: memValue,
 	})
 
 	return nil

@@ -4,6 +4,9 @@ type TraceStep struct {
 	PC int
 	Op Opcode
 
+	// Argument to certain opcodes like PUSH, MSTORE, etc.
+	Arg int
+
 	// Stack snapshots
 	StackBefore []int
 	StackAfter  []int
