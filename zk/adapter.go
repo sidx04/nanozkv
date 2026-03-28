@@ -7,7 +7,7 @@ import (
 )
 
 func TraceToCircuit(trace vm.ExecutionTrace) TraceCircuit {
-	var steps [MaxSteps]Step
+	var steps [MAX_STEPS]Step
 
 	i := 0
 
@@ -94,7 +94,7 @@ func TraceToCircuit(trace vm.ExecutionTrace) TraceCircuit {
 	}
 	// initialise remaining steps to 0 otherwise gnark cannot
 	// deal with null values.
-	for ; i < MaxSteps; i++ {
+	for ; i < MAX_STEPS; i++ {
 		steps[i] = Step{
 			PCBefore: lastPC,
 			PCAfter:  lastPC,

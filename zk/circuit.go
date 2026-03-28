@@ -46,10 +46,8 @@ const (
 	OP_HALT  = 6
 )
 
-const MaxSteps = 100
-
 type TraceCircuit struct {
-	Steps [MaxSteps]Step
+	Steps [MAX_STEPS]Step
 }
 
 func (tc *TraceCircuit) Define(api frontend.API) error {
