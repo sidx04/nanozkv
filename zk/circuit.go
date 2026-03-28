@@ -3,6 +3,10 @@ package zk
 import "github.com/consensys/gnark/frontend"
 
 type Step struct {
+	// program counter validation
+	PCBefore frontend.Variable
+	PCAfter  frontend.Variable
+
 	// stack pointer
 	StackPointerBefore frontend.Variable
 	StackPointerAfer   frontend.Variable
@@ -21,6 +25,9 @@ type Step struct {
 	// push value
 	Val frontend.Variable
 
+	// check correct opcodes
+	Opcode frontend.Variable
+
 	// selectors
 	IsAdd  frontend.Variable
 	IsMul  frontend.Variable
@@ -28,6 +35,16 @@ type Step struct {
 	IsPush frontend.Variable
 	IsNoop frontend.Variable
 }
+
+const (
+	OP_PUSH  = 0
+	OP_ADD   = 1
+	OP_SUB   = 2
+	OP_MUL   = 3
+	OP_LOAD  = 4
+	OP_STORE = 5
+	OP_HALT  = 6
+)
 
 const MaxSteps = 100
 
@@ -38,6 +55,31 @@ type TraceCircuit struct {
 func (tc *TraceCircuit) Define(api frontend.API) error {
 
 	for _, s := range tc.Steps {
+		// PC transition: pc_after = pc_before + 1
+		api.AssertIsEqual(
+			api.Mul(
+				api.Add(s.IsAdd, s.IsMul, s.IsSub, s.IsPush),
+				api.Sub(s.PCAfter, api.Add(s.PCBefore, 1)),
+			),
+			0,
+		)
+
+		// Opcode constraints
+		api.AssertIsEqual(
+			s.Opcode,
+			api.Add(
+				api.Add(
+					api.Mul(s.IsAdd, OP_ADD),
+					api.Mul(s.IsMul, OP_MUL),
+				),
+				api.Add(
+					api.Mul(s.IsSub, OP_SUB),
+					api.Mul(s.IsPush, OP_PUSH),
+				),
+				api.Mul(s.IsNoop, OP_HALT),
+			),
+		)
+
 		// Arithmetic Constraints
 
 		// ADD
@@ -165,6 +207,13 @@ func (tc *TraceCircuit) Define(api frontend.API) error {
 		api.AssertIsEqual(api.Mul(s.IsSub, api.Sub(s.IsSub, 1)), 0)
 		api.AssertIsEqual(api.Mul(s.IsPush, api.Sub(s.IsPush, 1)), 0)
 		api.AssertIsEqual(api.Mul(s.IsNoop, api.Sub(s.IsNoop, 1)), 0)
+	}
+
+	for i := range len(tc.Steps) - 1 {
+		curr := tc.Steps[i]
+		next := tc.Steps[i+1]
+
+		api.AssertIsEqual(curr.PCAfter, next.PCBefore)
 	}
 
 	return nil
